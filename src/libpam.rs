@@ -123,7 +123,7 @@ pub trait PamLibExt: private::Sealed {
     /// Returns PamError::SERVICE_ERR if the prompt contains any null byte
     fn get_authtok(&self, prompt: Option<&str>) -> PamResult<Option<&CStr>>;
 
-    fn set_authtok(&self, authtok: &CString) -> PamResult<()>;
+    fn set_authtok(&self, authtok: Option<&CString>) -> PamResult<()>;
 
     /// Get the remote hostname.
     fn get_rhost(&self) -> PamResult<Option<&CStr>>;
@@ -258,12 +258,13 @@ impl PamLibExt for Pam {
         }
     }
 
-    fn set_authtok(&self, authtok: &CString) -> PamResult<()> {
+    fn set_authtok(&self, authtok: Option<&CString>) -> PamResult<()> {
+        let authtok = authtok.map(|s| s.as_ptr()).unwrap_or_else(|| ptr::null());
         unsafe {
             set_item(
                 self.0,
                 PamItemType::AUTHTOK,
-                authtok.as_ptr() as *const c_void,
+                authtok as *const c_void,
             )
         }
     }
